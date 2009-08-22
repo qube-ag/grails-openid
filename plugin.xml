@@ -1,14 +1,14 @@
-<plugin name='openid' version='0.1'>
-  <author>Marcel Overdijk</author>
-  <authorEmail>marceloverdijk@gmail.com</authorEmail>
+<plugin name='openid' version='0.2' grailsVersion='1.1 &gt; *'>
+  <author>Marcel Overdijk, Matthias Bohlen</author>
+  <authorEmail>marceloverdijk@gmail.com, mbohlen@mbohlen.de</authorEmail>
   <title>OpenID</title>
   <description>Provides simple authentication using OpenID</description>
   <documentation>http://grails.org/OpenID+Plugin</documentation>
   <resources>
-    <resource>DataSource</resource>
     <resource>UrlMappings</resource>
     <resource>OpenidController</resource>
     <resource>OpenidService</resource>
     <resource>OpenidTagLib</resource>
   </resources>
+  <dependencies />
 </plugin>

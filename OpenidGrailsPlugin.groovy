@@ -14,10 +14,10 @@
  * limitations under the License.
  */ 
 class OpenidGrailsPlugin {
-    def version = "0.1"
+    def version = "0.2"
     def dependsOn = [:]
-    def author = "Marcel Overdijk"
-    def authorEmail = "marceloverdijk@gmail.com"
+    def author = "Marcel Overdijk, Matthias Bohlen"
+    def authorEmail = "marceloverdijk@gmail.com, mbohlen@mbohlen.de"
     def title = "OpenID"
     def description = "Provides simple authentication using OpenID"
     def documentation = "http://grails.org/OpenID+Plugin"
