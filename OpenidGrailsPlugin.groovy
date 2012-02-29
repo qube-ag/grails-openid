@@ -21,6 +21,7 @@ class OpenidGrailsPlugin {
     def title = "OpenID"
     def description = "Provides simple authentication using OpenID"
     def documentation = "http://grails.org/plugin/openid"
+	def scm = [ url: 'https://github.com/mkobel/grails-openid'  ]
 	
     def doWithSpring = {
          consumerManager(org.openid4java.consumer.ConsumerManager) {
