@@ -1,4 +1,4 @@
-<plugin name='openid' version='0.4' grailsVersion='2.0.0 &gt; *'>
+<plugin name='openid' version='0.4.3' grailsVersion='2.0.0 &gt; *'>
   <author>Marcel Overdijk, Matthias Bohlen, Moritz Kobel</author>
   <authorEmail>marceloverdijk@gmail.com, mbohlen@mbohlen.de, moritz.kobel@itds.ch</authorEmail>
   <title>OpenID</title>
@@ -15,7 +15,6 @@
     <repository name='http://repo.grails.org/grails/plugins' url='http://repo.grails.org/grails/plugins/' />
     <repository name='http://repo.grails.org/grails/core' url='http://repo.grails.org/grails/core/' />
     <repository name='grailsCore' url='http://svn.codehaus.org/grails/trunk/grails-plugins' />
-    <repository name='mavenCentral' url='http://repo1.maven.org/maven2/' />
   </repositories>
   <dependencies>
     <runtime>

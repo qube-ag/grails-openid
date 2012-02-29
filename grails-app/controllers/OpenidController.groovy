@@ -46,7 +46,9 @@ class OpenidController {
 
 				if (discovered != null) {
 					// obtain a AuthRequest message to be sent to the OpenID provider
-					def authReq = consumerManager.authenticate(discovered, getReturnToUrl(redirectParams))
+
+					String url = getReturnToUrl(redirectParams)
+					def authReq = consumerManager.authenticate(discovered, url)
 
 					// redirect to the OpenID provider endpoint
 					redirect(url: authReq.getDestinationUrl(true))
