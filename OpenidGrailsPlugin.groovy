@@ -14,13 +14,13 @@
  * limitations under the License.
  */ 
 class OpenidGrailsPlugin {
-    def version = "0.2"
+    def version = "0.4"
     def dependsOn = [:]
-    def author = "Marcel Overdijk, Matthias Bohlen"
-    def authorEmail = "marceloverdijk@gmail.com, mbohlen@mbohlen.de"
+    def author = "Marcel Overdijk, Matthias Bohlen, Moritz Kobel"
+    def authorEmail = "marceloverdijk@gmail.com, mbohlen@mbohlen.de, moritz.kobel@itds.ch"
     def title = "OpenID"
     def description = "Provides simple authentication using OpenID"
-    def documentation = "http://grails.org/OpenID+Plugin"
+    def documentation = "http://grails.org/plugin/openid"
 	
     def doWithSpring = {
          consumerManager(org.openid4java.consumer.ConsumerManager) {
