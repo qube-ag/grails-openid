@@ -93,10 +93,10 @@ class OpenidController {
 						} catch(Exception e) {
 							throw new OpenIDException("Error fetching sreg attributes", e);
 						}
-						// redirect to the OpenID provider endpoint
-						redirect(url: authReq.getDestinationUrl(true))
-						wasSuccessful = true
 					}
+					// redirect to the OpenID provider endpoint
+					redirect(url: authReq.getDestinationUrl(true))
+					wasSuccessful = true
 				}
 			}
 		}
