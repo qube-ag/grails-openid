@@ -1,19 +1,31 @@
 import org.openid4java.OpenIDException
 import org.openid4java.discovery.DiscoveryInformation
 import org.openid4java.message.ParameterList
+import org.openid4java.message.sreg.SRegRequest
+import org.openid4java.message.ax.FetchResponse
+import org.openid4java.message.ax.FetchRequest
+import org.openid4java.message.*
+import org.openid4java.message.sreg.SRegMessage
+import org.openid4java.message.sreg.SRegResponse
+import org.openid4java.message.ax.AxMessage
+import org.openid4java.consumer.ConsumerManager
 
 class OpenidController {
 
-	def consumerManager
+	def consumerManager = new ConsumerManager()
 
 	static Map allowedMethods = [login: 'POST']
 
 	def index = {
 		response.sendError(404)
 	}
+	
+	def grailsAppliation
 
 	def login = {
 		def redirectParams = extractParams()
+		def extendedAttrs = extractExtendedAttrs()
+		def sregAttrs = extractSregAttrs()
 
 		def identifier = params.openid_url
 		// check that the identifier is not empty
@@ -35,12 +47,15 @@ class OpenidController {
 		try {
 			// perform discovery on the user-supplied identifier
 			def discoveries = consumerManager.discover(identifier)
+			println "providers: " + grailsApplication?.config?.openid?.allowedProvider
+			if(grailsApplication.config.openid.allowedProviders) {
+				discoveries = discoveries.grep {println it.getOPEndpoint(); return grailsApplication.config.openid.allowedProviders.contains(it.getOPEndpoint())}
+			}
 			if (discoveries != null) {
 
 				// attempt to associate with the OpenID provider
 				// and retrieve one service endpoint for authentication
 				def discovered = consumerManager.associate(discoveries)
-
 				// store the discovery information in the user's session
 				session.openidDiscovered = discovered
 
@@ -49,10 +64,41 @@ class OpenidController {
 
 					String url = getReturnToUrl(redirectParams)
 					def authReq = consumerManager.authenticate(discovered, url)
+					
+					
+					if(extendedAttrs) {
+						//Add Extended Attributes
+						FetchRequest fetch;
+						try {
+							fetch = FetchRequest.createFetchRequest();
+							for (entry in  extendedAttrs) {
+								def att = entry.value
+								fetch.addAttribute(entry.key, att.typeUri, att.required? att.required.toBoolean():false, att.count?att.count.toInteger():1)
+							}
+							authReq.addExtension(fetch);
+						} catch(Exception e) {
 
-					// redirect to the OpenID provider endpoint
-					redirect(url: authReq.getDestinationUrl(true))
-					wasSuccessful = true
+							throw new OpenIDException("Error fetching extended attributes", e);
+						}
+					}
+					if(sregAttrs) {
+						SRegRequest sregReq
+						try {
+							sregReq = SRegRequest.createFetchRequest();
+							for (entry in  sregAttrs) {
+								def att = entry.value
+								sregReq.addAttribute(entry.key, att? att.toBoolean():true)
+							}
+							
+							authReq.addExtension(sregReq);
+							
+						} catch(Exception e) {
+							throw new OpenIDException("Error fetching sreg attributes", e);
+						}
+						// redirect to the OpenID provider endpoint
+						redirect(url: authReq.getDestinationUrl(true))
+						wasSuccessful = true
+					}
 				}
 			}
 		}
@@ -102,8 +148,35 @@ class OpenidController {
 				flash.openidErrorMessage = "The OpenID you entered could not be authorized. Please enter your OpenID and try again"
 				redirect(redirectParams.error)
 			}
+			
 			else {
+				session.openidParams = [:]
+				AuthSuccess authSuccess = (AuthSuccess) verification.getAuthResponse()
+				
+				if (authSuccess.hasExtension(SRegMessage.OPENID_NS_SREG))
+				{
+					MessageExtension ext = authSuccess.getExtension(SRegMessage.OPENID_NS_SREG);
+
+					if (ext instanceof SRegResponse)
+					{
+						SRegResponse sregResp = (SRegResponse) ext
+						session.openidParams.sreg = sregResp.getAttributes()
+					}
+				}
+				if (authSuccess.hasExtension(AxMessage.OPENID_NS_AX))
+				{
+					MessageExtension ext = authSuccess.getExtension(AxMessage.OPENID_NS_AX)
+					def extParams = [:]
+					if (ext instanceof FetchResponse)
+					{
+						session.openidParams.ax = ext.getAttributes()
+					}
+					
+				}
+				
 				session.openidIdentifier = verified.getIdentifier()
+				
+				
 				redirect(redirectParams.success)
 			}
 		}
@@ -123,24 +196,70 @@ class OpenidController {
 	}
 
 	/**
-	 * Extract success_* and error_* into maps that can be passed to redirect(),
-	 * but forbidding the use of "url" which could lead to XSS attacks or phishing
-	 */
-	private extractParams() {
-		def redirectParams = [success: [:], error: [:]]
+	* Extract Ax Attributes
+	*/
+	private extractExtendedAttrs() {
+		def extendedAttrs = [:]
 		params.keySet().each() {name ->
-			if (name.startsWith("success_") || name.startsWith('error_')) {
+			if (name.startsWith("extAttr_")) {
 				def underscore = name.indexOf('_')
 				if (underscore >= name.size() - 1) return
-				def prefix = name[0..underscore - 1]
-				def urlParam = name[underscore + 1..-1]
-				if (urlParam != 'url') {
-					redirectParams[prefix][urlParam] = params[name]
-				}
+				def val = name[underscore + 1..-1]
+				underscore = val.indexOf('_')
+				if (underscore >= val.size() - 1) return
+				def prefix = val[0..underscore - 1]
+				def param = val[underscore + 1..-1]
+				if(!extendedAttrs[prefix])
+					extendedAttrs[prefix] = [:]
+				extendedAttrs[prefix][param] = params[name]
 			}
 		}
-		return redirectParams
+		if(grailsApplication?.config?.openid?.allowedAxAttrs) {
+			extendedAttrs = extendedAttrs.subMap(grailsApplication.config.openid.allowedAxAttrs)
+		}
+		return extendedAttrs
 	}
+	
+	/**
+	* Extract sreg Attributes
+	*/
+   private extractSregAttrs() {
+	   def sregAttrs = [:]
+	   params.keySet().each() {name ->
+		   if (name.startsWith("sregAttr_")) {
+			   def underscore = name.indexOf('_')
+			   if (underscore >= name.size() - 1) return
+			   def prefix = name[0..underscore - 1]
+			   def val = name[underscore + 1..-1]
+			   sregAttrs[val] = params[name]
+		   }
+	   }
+	   if(grailsApplication?.config?.openid?.allowedSregAttrs) {
+		   sregAttrs = sregAttrs.subMap(grailsApplication.config.openid.allowedSregAttrs)
+	   }
+	   return sregAttrs
+   }
+	
+	/**
+	* Extract success_* and error_* into maps that can be passed to redirect(),
+	* but forbidding the use of "url" which could lead to XSS attacks or phishing
+	*/
+   private extractParams() {
+	   def redirectParams = [success: [:], error: [:]]
+	   params.keySet().each() {name ->
+		   if (name.startsWith("success_") || name.startsWith('error_')) {
+			   def underscore = name.indexOf('_')
+			   if (underscore >= name.size() - 1) return
+			   def prefix = name[0..underscore - 1]
+			   def urlParam = name[underscore + 1..-1]
+			   if (urlParam != 'url') {
+				   redirectParams[prefix][urlParam] = params[name]
+			   }
+		   }
+	   }
+	   return redirectParams
+   }
+	
 
 	private getReturnToUrl() {
 		return buildReturnToUrl([:])
