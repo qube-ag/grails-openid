@@ -24,10 +24,6 @@ class OpenidGrailsPlugin {
 	def scm = [ url: 'https://github.com/mkobel/grails-openid'  ]
 	
     def doWithSpring = {
-         consumerManager(org.openid4java.consumer.ConsumerManager) {
-             realmVerifier = { org.openid4java.server.RealmVerifier realmVerifier -> 
-                 enforceRpId = false
-             }
-         }
+         consumerManager(org.openid4java.consumer.ConsumerManager)
     }
 }
