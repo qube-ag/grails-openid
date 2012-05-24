@@ -47,18 +47,16 @@ class OpenidController {
 		try {
 			// perform discovery on the user-supplied identifier
 			def discoveries = consumerManager.discover(identifier)
-			println "providers: " + grailsApplication?.config?.openid?.allowedProvider
-			if(grailsApplication.config.openid.allowedProviders) {
-				discoveries = discoveries.grep {println it.getOPEndpoint(); return grailsApplication.config.openid.allowedProviders.contains(it.getOPEndpoint())}
+			if(grailsApplication.config?.openid?.allowedProviders?.size()) {
+				discoveries = discoveries.grep {grailsApplication.config.openid.allowedProviders.contains(it.getOPEndpoint().toString())}
 			}
 			if (discoveries != null) {
-
 				// attempt to associate with the OpenID provider
 				// and retrieve one service endpoint for authentication
 				def discovered = consumerManager.associate(discoveries)
 				// store the discovery information in the user's session
 				session.openidDiscovered = discovered
-
+				
 				if (discovered != null) {
 					// obtain a AuthRequest message to be sent to the OpenID provider
 
@@ -214,8 +212,8 @@ class OpenidController {
 				extendedAttrs[prefix][param] = params[name]
 			}
 		}
-		if(grailsApplication?.config?.openid?.allowedAxAttrs) {
-			extendedAttrs = extendedAttrs.subMap(grailsApplication.config.openid.allowedAxAttrs)
+		if(grailsApplication?.config?.openid?.allowedAxAttrs?.size()) {
+			extendedAttrs = extendedAttrs.grep {grailsApplication.config.openid.allowedAxAttrs.contains(it.value.typeUri) }
 		}
 		return extendedAttrs
 	}
@@ -234,7 +232,7 @@ class OpenidController {
 			   sregAttrs[val] = params[name]
 		   }
 	   }
-	   if(grailsApplication?.config?.openid?.allowedSregAttrs) {
+	   if(grailsApplication?.config?.openid?.allowedSregAttrs?.size()) {
 		   sregAttrs = sregAttrs.subMap(grailsApplication.config.openid.allowedSregAttrs)
 	   }
 	   return sregAttrs

@@ -79,7 +79,8 @@ class OpenidTagLib {
         attrs.url = [controller:"openid", action:"login"]
         
         def args = [success:attrs.remove("success"), error:attrs.remove("error")]
-        
+		def extAttrs = attrs.remove("extendedAttrs")
+		def sregAttrs = attrs.remove("sregAttrs")
         out << g.form(attrs) {
             args.each() { kind, url ->
                 def controller = url?.controller ? url.controller : controllerName
@@ -92,6 +93,14 @@ class OpenidTagLib {
                     out << g.hiddenField(name:"${kind}_id", value: url.id)
                 }
             }
+			extAttrs.each() { name,map ->
+				map.subMap(["count","typeUri","required"]).each { ename,value ->
+					out << g.hiddenField(name:"extAttr_${name}_${ename}", value: value)
+				}
+			}
+			sregAttrs.each() { name,required ->
+				out << g.hiddenField(name:"sregAttr_${name}", value: required)
+			}
             if (body) {
                 out << body()
             }
