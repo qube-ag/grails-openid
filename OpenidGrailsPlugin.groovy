@@ -14,7 +14,7 @@
  * limitations under the License.
  */ 
 class OpenidGrailsPlugin {
-    def version = "0.4.3"
+    def version = "0.4.4"
     def dependsOn = [:]
     def author = "Marcel Overdijk, Matthias Bohlen, Moritz Kobel"
     def authorEmail = "marceloverdijk@gmail.com, mbohlen@mbohlen.de, moritz.kobel@itds.ch"
